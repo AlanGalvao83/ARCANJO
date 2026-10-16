@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ARCANJO INTELLIGENCE — Sistema Full-Stack de Segurança Patrimonial, Controle de Rondas QR/GPS, Checklists, Equipe e Escala Mensal para Templos Religiosos." />
+  <title>ARCANJO INTELLIGENCE — SaaS Security Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <!-- TELA DE LOGIN SPLIT-SCREEN (FIGMA SAAS DASHBOARD UI) -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-split-shell">
+      <div class="login-left-pane">
+        <div class="login-logo-circle">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path d="M4 18L10 12L16 16L24 8" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="10" cy="12" r="2.5" fill="#FFFFFF"/>
+            <circle cx="16" cy="16" r="2.5" fill="#FFFFFF"/>
+            <circle cx="24" cy="8" r="2.5" fill="#FFFFFF"/>
+          </svg>
+        </div>
+        <h1 class="login-title">Log in</h1>
+        <p class="login-subtitle">ARCANJO Intelligence · Segurança Patrimonial</p>
+
+        <div class="login-error" id="login-error" style="display:none;"></div>
+
+        <form id="login-form" class="login-form">
+          <div class="form-group">
+            <label for="login-identifier">Usuário, E-mail ou Telefone</label>
+            <input
+              class="field login-field"
+              id="login-identifier"
+              required
+              autocomplete="username"
+              placeholder="exemplo@templo.org ou @usuario"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="login-password">Senha de Acesso</label>
+            <div class="password-input-wrap">
+              <input
+                class="field login-field"
+                id="login-password"
+                type="password"
+                required
+                autocomplete="current-password"
+                placeholder="••••••••"
+              />
+              <button type="button" class="pwd-toggle-btn" id="toggle-login-pwd" title="Mostrar/Ocultar senha">👁</button>
+            </div>
+          </div>
+
+          <button type="submit" class="primary-btn login-submit-btn" id="login-submit-btn">
+            Entrar no Painel
+          </button>
+        </form>
+
+        <div class="login-quick-box">
+          <div class="login-quick-header">
+            <span>Acesso Rápido (Senha padrão: <code>123456</code>)</span>
+          </div>
+          <div class="login-quick-grid" id="login-quick-grid">
+            <button type="button" class="login-quick-pill" data-quick-login="marcos@templo.org" data-quick-pwd="123456">
+              <strong>Gestor de Segurança</strong>
+              <small>Presb. Marcos Viana</small>
+            </button>
+            <button type="button" class="login-quick-pill" data-quick-login="pastor@templo.org" data-quick-pwd="123456">
+              <strong>Pastor</strong>
+              <small>Pr. Roberto Almeida</small>
+            </button>
+            <button type="button" class="login-quick-pill" data-quick-login="samuel@templo.org" data-quick-pwd="123456">
+              <strong>Equipe de Segurança</strong>
+              <small>Samuel Rodrigues</small>
+            </button>
+            <button type="button" class="login-quick-pill" data-quick-login="carlos@templo.org" data-quick-pwd="123456">
+              <strong>Obreiros</strong>
+              <small>Carlos Andrade</small>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="login-right-showcase">
+        <div class="login-illustration-card">
+          <svg viewBox="0 0 560 400" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="saasGrad1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#605BFF" stop-opacity="0.16"/>
+                <stop offset="100%" stop-color="#5B93FF" stop-opacity="0.04"/>
+              </linearGradient>
+              <linearGradient id="saasWave" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#5B93FF"/>
+                <stop offset="100%" stop-color="#605BFF"/>
+              </linearGradient>
+            </defs>
+            <circle cx="280" cy="200" r="165" fill="url(#saasGrad1)"/>
+            <!-- Floating Dashboard Preview Card -->
+            <rect x="70" y="60" width="420" height="270" rx="20" fill="#FFFFFF" stroke="#ECEEF6" stroke-width="2"/>
+            <circle cx="105" cy="94" r="14" fill="#605BFF"/>
+            <rect x="130" y="88" width="90" height="12" rx="6" fill="#030229"/>
+            <!-- Mini KPI Pills -->
+            <rect x="96" y="124" width="112" height="54" rx="12" fill="#F7F8FC"/>
+            <circle cx="118" cy="151" r="14" fill="#EBF2FF"/>
+            <rect x="140" y="142" width="48" height="9" rx="4.5" fill="#030229"/>
+            <rect x="140" y="156" width="56" height="6" rx="3" fill="#8A90A6"/>
+
+            <rect x="222" y="124" width="112" height="54" rx="12" fill="#F7F8FC"/>
+            <circle cx="244" cy="151" r="14" fill="#FFF7E1"/>
+            <rect x="266" y="142" width="48" height="9" rx="4.5" fill="#030229"/>
+            <rect x="266" y="156" width="56" height="6" rx="3" fill="#8A90A6"/>
+
+            <rect x="348" y="124" width="116" height="54" rx="12" fill="#F7F8FC"/>
+            <circle cx="370" cy="151" r="14" fill="#FFF0EA"/>
+            <rect x="392" y="142" width="48" height="9" rx="4.5" fill="#030229"/>
+            <rect x="392" y="156" width="56" height="6" rx="3" fill="#8A90A6"/>
+
+            <!-- Smooth Wave Spline -->
+            <path d="M98 280 C 140 235, 175 290, 215 245 C 255 200, 290 270, 335 225 C 375 185, 415 240, 458 205" fill="none" stroke="url(#saasWave)" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="215" cy="245" r="5" fill="#FFFFFF" stroke="#605BFF" stroke-width="3"/>
+            <circle cx="335" cy="225" r="6" fill="#FFFFFF" stroke="#605BFF" stroke-width="3.5"/>
+            <rect x="303" y="190" width="64" height="24" rx="7" fill="#030229"/>
+            <text x="335" y="206" text-anchor="middle" fill="#FFFFFF" font-family="Nunito, sans-serif" font-size="10" font-weight="800">6/6 Postos</text>
+          </svg>
+          <div class="login-showcase-caption">
+            <h2>Controle Patrimonial, Rondas QR/GPS & Escalas</h2>
+            <p>Plataforma unificada de governança operacional, proteção de famílias e gestão de equipes para templos religiosos.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar" id="desktop-sidebar"></aside>
+    <div class="mobile-drawer" id="mobile-drawer"></div>
+
+    <div class="main">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+          <button class="menu-btn" id="menu-open" aria-label="Abrir menu">☰</button>
+          <div class="top-meta">
+            <strong id="top-view-title">Dashboard</strong>
+            <small id="top-datetime">Carregando operação...</small>
+          </div>
+          <div class="brand" style="display:none" id="mobile-brand">
+            <span class="brand-mark">⌁</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button type="button" class="user-session-badge" id="user-session-badge" title="Clique para ver seu perfil e alterar sua senha">
+            <span class="user-session-avatar" id="user-session-avatar">👤</span>
+            <div class="user-session-text">
+              <strong id="user-session-name">Operador</strong>
+              <small id="user-session-role">Gestor de Segurança · 🔑 Alterar senha</small>
+            </div>
+          </button>
+          <button class="bell has-alert" id="top-bell" title="Ver ocorrências e alertas prioritários" aria-label="Ver alertas">🔔</button>
+          <button class="primary-btn" id="new-occurrence">＋ Registrar Fato</button>
+          <button class="outline-btn" id="logout-btn" title="Encerrar sessão e voltar para tela de login" style="height:40px;padding:0 14px;color:#E04F5F;border-color:#FAD7DB;">🚪 Sair</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="view active" data-view="painel"></section>
+        <section class="view" data-view="rondas"></section>
+        <section class="view" data-view="checklists"></section>
+        <section class="view" data-view="patrimonio"></section>
+        <section class="view" data-view="ocorrencias"></section>
+        <section class="view" data-view="protecao"></section>
+        <section class="view" data-view="equipe"></section>
+        <section class="view" data-view="escala"></section>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL 1: VALIDAÇÃO DE POSTO EM TEMPO REAL (QR CODE / GPS / TURNO) -->
+  <div class="modal-backdrop" id="scan-modal" role="dialog" aria-modal="true" aria-label="Validar Posto de Ronda">
+    <form class="modal" id="scan-form">
+      <div class="modal-head">
+        <div>
+          <div class="overline">Controle de Ronda em Tempo Real</div>
+          <h2>Validação Presencial de Posto (QR Code + GPS)</h2>
+          <p>Escaneie a etiqueta QR do posto ou selecione o ponto inspecionado para registrar passagem auditável no turno.</p>
+        </div>
+        <button type="button" class="close-btn" data-close-modal="scan-modal" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="qr-preview-box">
+          <video id="qr-video" class="qr-video" playsinline muted></video>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+            <button type="button" class="outline-btn" id="toggle-camera-btn">📷 Ler QR Code com Câmera</button>
+            <button type="button" class="outline-btn" id="capture-gps-btn">📍 Capturar Geolocalização GPS</button>
+          </div>
+          <div style="margin-top:10px;" id="gps-status-box">
+            <span class="gps-pill" id="gps-display">📍 GPS: Pronto para validação no perímetro do templo</span>
+          </div>
+        </div>
+
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="scan-checkpoint-select">Posto de Verificação <span class="required">*</span></label>
+            <select class="field" id="scan-checkpoint-select" required></select>
+          </div>
+          <div class="form-group">
+            <label for="scan-qr-input">Código / Token QR Lido</label>
+            <input class="field" id="scan-qr-input" placeholder="Ex.: ARC-QR-POSTO-01-ESTAC" />
+          </div>
+        </div>
+
+        <div id="scan-checkpoint-instructions" class="privacy-note" style="background:#f2f8fb;border-color:#cfe2ec;color:#1d4660;"></div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="scan-agent">Agente / Responsável <span class="required">*</span></label>
+            <input class="field" id="scan-agent" required value="Samuel R." />
+          </div>
+          <div class="form-group">
+            <label for="scan-method">Método de Verificação</label>
+            <select class="field" id="scan-method">
+              <option value="QR_CODE + GPS" selected>QR Code + GPS</option>
+              <option value="QR_CODE">Leitura QR Code</option>
+              <option value="GPS PRESENCIAL">Geolocalização GPS</option>
+              <option value="CONFERÊNCIA MANUAL">Conferência Presencial</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="scan-status">Resultado da Inspeção <span class="required">*</span></label>
+            <select class="field" id="scan-status">
+              <option value="OK" selected>✓ Tudo OK (Sem alterações)</option>
+              <option value="ANOMALIA">⚠ Anomalia / Risco Identificado</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="anomaly-extra-fields" style="display:none;padding:14px;border-radius:14px;background:#fce8e5;border:1px solid #efb9b0;">
+          <div class="form-grid two">
+            <div class="form-group">
+              <label for="scan-occ-severity">Gravidade do Alerta</label>
+              <select class="field" id="scan-occ-severity">
+                <option value="Atenção" selected>Atenção</option>
+                <option value="Alto">Alto</option>
+                <option value="Crítico">Crítico</option>
+              </select>
+            </div>
+            <div class="form-group" style="display:flex;align-items:center;padding-top:20px;">
+              <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;">
+                <input type="checkbox" id="scan-create-occ" checked />
+                Gerar ocorrência automática vinculada a este posto
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="scan-notes">Observações de Campo / Itens Verificados</label>
+          <textarea class="field" id="scan-notes" placeholder="Ex.: Portas trancadas, iluminação operante, extintor no prazo e rota livre."></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="secondary-btn" data-close-modal="scan-modal">Cancelar</button>
+        <button type="submit" class="primary-btn green" id="scan-submit-btn">✓ Confirmar Passagem no Posto</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL 2: ETIQUETAS QR CODE PARA IMPRESSÃO DOS POSTOS DO TEMPLO -->
+  <div class="modal-backdrop" id="qr-labels-modal" role="dialog" aria-modal="true" aria-label="Etiquetas QR Code dos Postos">
+    <div class="modal" style="width:min(780px, 100%);">
+      <div class="modal-head">
+        <div>
+          <div class="overline">Sinalização Patrimonial Física</div>
+          <h2>Etiquetas QR Code dos Postos de Ronda</h2>
+          <p>Imprima e fixe cada etiqueta no respectivo ponto físico do templo para leitura rápida pelos obreiros e equipe de segurança.</p>
+        </div>
+        <button type="button" class="close-btn" data-close-modal="qr-labels-modal" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="qr-print-grid" id="qr-print-container"></div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="secondary-btn" data-close-modal="qr-labels-modal">Fechar</button>
+        <button type="button" class="primary-btn" id="print-qr-btn">🖨️ Imprimir Placas QR Code</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: INICIAR NOVA RONDA / TURNO -->
+  <div class="modal-backdrop" id="new-patrol-modal" role="dialog" aria-modal="true" aria-label="Iniciar Turno de Ronda">
+    <form class="modal" id="new-patrol-form">
+      <div class="modal-head">
+        <div>
+          <div class="overline">Abertura de Turno Operacional</div>
+          <h2>Iniciar Nova Sessão de Ronda</h2>
+          <p>Registra o início formal da ronda com rastreamento de cobertura dos postos do templo.</p>
+        </div>
+        <button type="button" class="close-btn" data-close-modal="new-patrol-modal" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="patrol-title">Objetivo da Ronda <span class="required">*</span></label>
+            <input class="field" id="patrol-title" required value="Ronda Preventiva e Patrimonial" />
+          </div>
+          <div class="form-group">
+            <label for="patrol-shift">Turno / Culto <span class="required">*</span></label>
+            <select class="field" id="patrol-shift">
+              <option>Pré-Culto (Abertura do Templo)</option>
+              <option selected>Durante o Culto (Perímetro & Nave)</option>
+              <option>Pós-Culto (Fechamento Patrimonial)</option>
+              <option>Ronda Noturna / Vigília</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="patrol-agent">Agente Responsável <span class="required">*</span></label>
+            <input class="field" id="patrol-agent" required value="Samuel R." />
+          </div>
+          <div class="form-group">
+            <label for="patrol-role">Equipe</label>
+            <select class="field" id="patrol-role">
+              <option selected>Equipe de Segurança</option>
+              <option>Gestor de Segurança</option>
+              <option>Obreiros</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="patrol-notes">Instruções específicas do turno</label>
+          <input class="field" id="patrol-notes" placeholder="Ex.: Atenção redobrada à iluminação do estacionamento norte e fechamento da tesouraria." />
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="secondary-btn" data-close-modal="new-patrol-modal">Cancelar</button>
+        <button type="submit" class="primary-btn">▶ Iniciar Ronda Agora</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL 4: NOVO ITEM DE CHECKLIST POR TURNO -->
+  <div class="modal-backdrop" id="new-checklist-modal" role="dialog" aria-modal="true" aria-label="Novo Item de Checklist">
+    <form class="modal" id="new-checklist-form">
+      <div class="modal-head">
+        <div>
+          <div class="overline">Padronização Operacional</div>
+          <h2>Adicionar Verificação ao Checklist</h2>
+          <p>Inclua um item verificável em uma das fases do turno (Abertura, Durante o Culto ou Fechamento Patrimonial).</p>
+        </div>
+        <button type="button" class="close-btn" data-close-modal="new-checklist-modal" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="ck-title">O que deve ser verificado? <span class="required">*</span></label>
+          <input class="field" id="ck-title" required placeholder="Ex.: Conferir tranca da sala de instrumentos e desligar amplificadores" />
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="ck-phase">Fase do Turno</label>
+            <select class="field" id="ck-phase">
+              <option value="Abertura / Pré-Culto">1. Abertura / Pré-Culto</option>
+              <option value="Durante o Culto">2. Durante o Culto</option>
+              <option value="Fechamento Patrimonial">3. Fechamento Patrimonial</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ck-area">Área / Categoria</label>
+            <select class="field" id="ck-area">
+              <option>Segurança Patrimonial</option>
+              <option>Evacuação</option>
+              <option>Estacionamento</option>
+              <option>Proteção Infantil</option>
+              <option>Controle de Acesso</option>
+              <option>Comunicação</option>
+              <option>Infraestrutura</option>
+              <option>Saúde</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ck-resp">Responsável</label>
+            <input class="field" id="ck-resp" required value="Equipe de Segurança" />
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#29495d;cursor:pointer;">
+          <input type="checkbox" id="ck-critical" checked />
+          Marcar como Barreira Crítica de Segurança
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="secondary-btn" data-close-modal="new-checklist-modal">Cancelar</button>
+        <button type="submit" class="primary-btn">＋ Adicionar ao Checklist</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL 5: REGISTRAR FATO / OCORRÊNCIA DE SEGURANÇA -->
+  <div class="modal-backdrop" id="occurrence-modal" role="dialog" aria-modal="true" aria-label="Registrar fato de segurança">
+    <form class="modal" id="occurrence-form">
+      <div class="modal-head">
+        <div>
+          <div class="overline">Registro Responsável (Persistido em Banco SQL)</div>
+          <h2>Novo Fato de Segurança</h2>
+          <p>Descreva o observado e a resposta aplicada. Evite suposições sobre pessoas.</p>
+        </div>
+        <button type="button" class="close-btn" data-close-modal="occurrence-modal" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="form-type">Classificação</label>
+            <select class="field" id="form-type">
+              <option>Crime</option>
+              <option>Incidente</option>
+              <option>Emergência</option>
+              <option selected>Quase-incidente</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="form-severity">Nível de atenção</label>
+            <select class="field" id="form-severity">
+              <option>Crítico</option>
+              <option>Alto</option>
+              <option selected>Atenção</option>
+              <option>Controlado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="form-date">Data e hora <span class="required">*</span></label>
+            <input class="field" id="form-date" type="datetime-local" required />
+          </div>
+        </div>
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="form-title">Título do fato <span class="required">*</span></label>
+            <input class="field" id="form-title" required placeholder="Ex.: Porta da sala de som destrancada após o culto" />
+          </div>
+          <div class="form-group">
+            <label for="form-area">Local / área <span class="required">*</span></label>
+            <input class="field" id="form-area" required placeholder="Ex.: Cabine de Som & Mídia" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="form-description">O que foi observado <span class="required">*</span></label>
+          <textarea class="field" id="form-description" required placeholder="Descreva ação, contexto, data/hora e local de forma objetiva."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="form-response">Resposta adotada <span class="required">*</span></label>
+          <textarea class="field" id="form-response" required placeholder="Ex.: Item recolhido, sala trancada, gestor comunicado."></textarea>
+        </div>
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="form-damage">Dano ou consequência observada</label>
+            <input class="field" id="form-damage" value="Sem dano identificado" />
+          </div>
+          <div class="form-group">
+            <label for="form-external">Acionamento externo</label>
+            <input class="field" id="form-external" value="Não aplicável" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="form-lesson">Lição / ação corretiva verificável</label>
+          <input class="field" id="form-lesson" placeholder="O que deve ser conferido na próxima ronda?" />
+        </div>
+        <div class="privacy-note">
+          <span>▣</span>
+          <div>
+            <strong>Proteção de Dados (LGPD):</strong> não inclua detalhes desnecessários de crianças, saúde, vítimas ou imagens. Registros sensíveis permanecem restritos à gestão.
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="secondary-btn" data-close-modal="occurrence-modal">Cancelar</button>
+        <button type="submit" class="primary-btn">⚠ Salvar Registro</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL 6: ADICIONAR / EDITAR PERFIL DA EQUIPE (APENAS DADOS DA PESSOA) -->
+  <div class="modal-backdrop" id="team-member-modal" role="dialog" aria-modal="true" aria-label="Gerenciar Perfil da Equipe">
+    <form class="modal" id="team-member-form">
+      <input type="hidden" id="tm-id" value="" />
+      <div class="modal-head">
+        <div>
+          <div class="overline">Cadastro de Integrante</div>
+          <h2 id="tm-modal-title">Adicionar Novo Perfil na Equipe</h2>
+          <p>Cadastre os dados pessoais e a função do integrante. O posto e o horário serão definidos na Escala do Mês.</p>
+        </div>
+        <button type="button" class="close-btn" data-close-modal="team-member-modal" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="tm-name">Nome Completo <span class="required">*</span></label>
+            <input class="field" id="tm-name" required placeholder="Ex.: Cosme Alan Martins Galvão" />
+          </div>
+          <div class="form-group">
+            <label for="tm-role">Perfil / Função <span class="required">*</span></label>
+            <select class="field" id="tm-role" required>
+              <option value="Equipe de Segurança">Equipe de Segurança</option>
+              <option value="Obreiros">Obreiros</option>
+              <option value="Gestor de Segurança">Gestor de Segurança</option>
+              <option value="Pastor">Pastor</option>
+              <option value="Apoio / Saúde">Apoio / Saúde (Brigadista)</option>
+              <option value="Ministério Infantil">Ministério Infantil</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="tm-phone">Telefone / WhatsApp <span class="required">*</span></label>
+            <input class="field" id="tm-phone" required placeholder="Ex.: (61) 98440-0540" />
+          </div>
+          <div class="form-group">
+            <label for="tm-email">E-mail</label>
+            <input class="field" id="tm-email" type="email" placeholder="Ex.: nome@email.com" />
+          </div>
+        </div>
+
+        <div class="form-grid two" style="padding:14px;border-radius:14px;background:#f3f8fb;border:1px solid #d5e5ee;">
+          <div class="form-group">
+            <label for="tm-username">🔑 Usuário de Login</label>
+            <input class="field" id="tm-username" placeholder="Gerado automaticamente se vazio (ex.: cosme.galvao)" />
+          </div>
+          <div class="form-group">
+            <label for="tm-password" id="tm-password-label">🔒 Senha de Acesso</label>
+            <div class="password-input-wrap">
+              <input class="field" id="tm-password" type="password" placeholder="Padrão: 123456 (ou digite nova senha)" />
+              <button type="button" class="pwd-toggle-btn" id="toggle-tm-pwd" title="Mostrar/Ocultar senha">👁</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="tm-notes">Capacitações / Observações da Pessoa</label>
+          <textarea class="field" id="tm-notes" placeholder="Ex.: Treinado em primeiros socorros (DEA), prevenção contra incêndio e protocolo infantil."></textarea>
+        </div>
+
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:#183b51;cursor:pointer;">
+          <input type="checkbox" id="tm-active" checked />
+          Perfil Ativo (disponível para Login no sistema e para a Escala do Mês)
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="secondary-btn" data-close-modal="team-member-modal">Cancelar</button>
+        <button type="submit" class="primary-btn" id="tm-submit-btn">✓ Salvar Perfil</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL 7: ESCALA DO MÊS (ATRIBUIR PESSOAL CADASTRADO) -->
+  <div class="modal-backdrop" id="schedule-modal" role="dialog" aria-modal="true" aria-label="Escalar Membro no Mês">
+    <form class="modal" id="schedule-form">
+      <div class="modal-head">
+        <div>
+          <div class="overline">Planejamento Mensal de Segurança & Acolhimento</div>
+          <h2>Atribuir Membro na Escala do Mês</h2>
+          <p>Selecione um integrante ativo já cadastrado na Equipe e vincule-o a uma data, culto e posto do templo.</p>
+        </div>
+        <button type="button" class="close-btn" data-close-modal="schedule-modal" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="sc-member">Integrante Cadastrado (Ativos) <span class="required">*</span></label>
+            <select class="field" id="sc-member" required></select>
+          </div>
+          <div class="form-group">
+            <label for="sc-date">Data na Escala <span class="required">*</span></label>
+            <input class="field" id="sc-date" type="date" required />
+          </div>
+        </div>
+
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="sc-event">Culto / Evento <span class="required">*</span></label>
+            <select class="field" id="sc-event" required>
+              <option value="Culto da Família (Domingo Noite)">Culto da Família (Domingo Noite)</option>
+              <option value="Escola Bíblica & Culto Matutino">Escola Bíblica & Culto Matutino</option>
+              <option value="Culto de Ensino & Oração">Culto de Ensino & Oração (Quarta)</option>
+              <option value="Culto de Sexta & Vigília">Culto de Sexta & Vigília</option>
+              <option value="Culto de Jovens (Sábado)">Culto de Jovens (Sábado)</option>
+              <option value="Culto de Santa Ceia (Domingo Noite)">Culto de Santa Ceia (Domingo Noite)</option>
+              <option value="Plantão Patrimonial Especial">Plantão Patrimonial Especial</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="sc-shift">Horário do Turno <span class="required">*</span></label>
+            <select class="field" id="sc-shift" required>
+              <option value="18:00 - 21:00" selected>18:00 - 21:00 (Noturno)</option>
+              <option value="08:30 - 11:30">08:30 - 11:30 (Matutino)</option>
+              <option value="19:00 - 21:30">19:00 - 21:30 (Semana)</option>
+              <option value="16:00 - 18:30">16:00 - 18:30 (Abertura / Tarde)</option>
+              <option value="21:00 - 23:30">21:00 - 23:30 (Fechamento / Vigília)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid two">
+          <div class="form-group">
+            <label for="sc-post">Posto / Função na Escala <span class="required">*</span></label>
+            <select class="field" id="sc-post" required>
+              <option value="Posto 01 · Estacionamento & Perímetro">Posto 01 · Estacionamento & Perímetro</option>
+              <option value="Posto 02 · Saídas & Corredor Lateral">Posto 02 · Saídas & Corredor Lateral</option>
+              <option value="Posto 03 · Recepção & Acesso Infantil">Posto 03 · Recepção & Acesso Infantil</option>
+              <option value="Posto 04 · Nave & Primeiros Socorros">Posto 04 · Nave & Primeiros Socorros</option>
+              <option value="Posto 05 · Cabine de Som & Patrimônio">Posto 05 · Cabine de Som & Patrimônio</option>
+              <option value="Posto 06 · Coordenação & Tesouraria">Posto 06 · Coordenação & Tesouraria</option>
+              <option value="Nave Principal · Corredor Central">Nave Principal · Corredor Central</option>
+              <option value="Púlpito & Decisão de Continuidade">Púlpito & Decisão de Continuidade</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="sc-status">Status Inicial</label>
+            <select class="field" id="sc-status">
+              <option value="Escalado" selected>Escalado (Aguardando confirmação)</option>
+              <option value="Confirmado">Confirmado pelo voluntário</option>
+              <option value="Em Posto">Em Posto (Presente)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="sc-notes">Observações da Escala / Função Específica</label>
+          <input class="field" id="sc-notes" placeholder="Ex.: Responsável pela abertura dos portões 30 min antes e fechamento do cofre." />
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="secondary-btn" data-close-modal="schedule-modal">Cancelar</button>
+        <button type="submit" class="primary-btn">📅 Incluir na Escala do Mês</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL 8: ALTERAR SENHA DE ACESSO -->
+  <div class="modal-backdrop" id="change-password-modal" role="dialog" aria-modal="true" aria-label="Alterar Senha de Acesso">
+    <form class="modal" id="change-password-form" style="width:min(520px, 100%);">
+      <div class="modal-head">
+        <div>
+          <div class="overline">Segurança da Conta</div>
+          <h2>Alterar Senha de Acesso</h2>
+          <p id="change-pwd-subtitle">Defina uma nova senha pessoal para seu perfil no ARCANJO Intelligence.</p>
+        </div>
+        <button type="button" class="close-btn" data-close-modal="change-password-modal" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="cp-member-id" value="" />
+        <div class="form-group">
+          <label for="cp-new-password">Nova Senha <span class="required">*</span></label>
+          <input class="field" id="cp-new-password" type="password" required minlength="4" placeholder="Mínimo de 4 caracteres" />
+        </div>
+        <div class="form-group">
+          <label for="cp-confirm-password">Confirmar Nova Senha <span class="required">*</span></label>
+          <input class="field" id="cp-confirm-password" type="password" required minlength="4" placeholder="Repita a nova senha" />
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="secondary-btn" data-close-modal="change-password-modal">Cancelar</button>
+        <button type="submit" class="primary-btn">🔑 Atualizar Senha</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

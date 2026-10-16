@@ -1,0 +1,26 @@
+# Python & Virtual Environment
+.venv/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local SQLite Database (production uses Supabase PostgreSQL)
+*.db
+*.db-journal
+*.db-wal
+*.sqlite3
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+
+# Vercel & IDE
+.vercel/
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db

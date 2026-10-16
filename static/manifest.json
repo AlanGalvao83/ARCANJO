@@ -1,0 +1,9 @@
+{
+  "name": "ARCANJO INTELLIGENCE — Segurança Patrimonial de Templos",
+  "short_name": "ARCANJO",
+  "description": "Central de monitoramento preventivo, controle de rondas QR/GPS, checklists por turno e segurança patrimonial para templos religiosos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#102b40",
+  "theme_color": "#13344d"
+}
