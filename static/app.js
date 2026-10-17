@@ -72,6 +72,7 @@
     scheduleDateFilter: "Todas",
     calendarYear: 2026,
     calendarMonth: 9, // 0-indexed: 9 = Outubro 2026
+    sidebarCollapsed: localStorage.getItem("arcanjo-sidebar-collapsed") === "1",
     gpsCoords: null,
     cameraStream: null
   };
@@ -192,11 +193,16 @@
   }
 
   function renderSidebar() {
+    const appEl = document.querySelector(".app");
+    if (appEl) {
+      appEl.classList.toggle("sidebar-collapsed", Boolean(state.sidebarCollapsed));
+    }
+
     const activePatrol = state.patrol_sessions.find(p => p.status === "Em andamento") || state.patrol_sessions[0];
     const navHtml = navItems.map(([key, icon, label]) => {
       const badge = getNavBadge(key);
-      return `<button class="${state.view === key ? "active" : ""}" data-nav="${key}">
-        <span class="nav-left"><span class="nav-icon">${icon}</span><span>${label}</span></span>
+      return `<button class="${state.view === key ? "active" : ""}" data-nav="${key}" title="${esc(label)}">
+        <span class="nav-left"><span class="nav-icon">${icon}</span><span class="nav-text">${label}</span></span>
         ${badge ? `<span class="nav-pill">${badge}</span>` : ""}
       </button>`;
     }).join("");
@@ -206,12 +212,21 @@
       : "U";
 
     document.getElementById("desktop-sidebar").innerHTML = `
-      <div class="brand">
-        <span class="brand-mark">⌁</span>
-        <div>
-          <div class="brand-name">ARCANJO</div>
-          <div class="brand-sub">SaaS Security</div>
+      <div class="brand-row">
+        <div class="brand">
+          <span class="brand-mark">⌁</span>
+          <div class="brand-text">
+            <div class="brand-name">ARCANJO</div>
+            <div class="brand-sub">SaaS Security</div>
+          </div>
         </div>
+        <button
+          type="button"
+          id="sidebar-collapse-toggle"
+          class="sidebar-collapse-btn"
+          title="${state.sidebarCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}"
+          aria-label="${state.sidebarCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}"
+        >${state.sidebarCollapsed ? "»" : "«"}</button>
       </div>
       <nav class="nav">
         <span class="nav-label">Menu Principal</span>
@@ -228,14 +243,14 @@
       ${state.currentUser ? `
         <div class="sidebar-profile-card">
           <div class="sidebar-profile-top">
-            <span class="sidebar-profile-avatar">${esc(userInitials)}</span>
+            <span class="sidebar-profile-avatar" title="${esc(state.currentUser.name)}">${esc(userInitials)}</span>
             <div class="sidebar-profile-meta">
               <div class="sidebar-profile-name">${esc(state.currentUser.name)}</div>
               <div class="sidebar-profile-role">@${esc(state.currentUser.username || "usuario")} · ${esc(state.currentUser.role)}</div>
             </div>
           </div>
-          <button type="button" id="sidebar-change-pwd-btn" class="sidebar-pwd-btn">
-            🔑 Alterar Minha Senha
+          <button type="button" id="sidebar-change-pwd-btn" class="sidebar-pwd-btn" title="Alterar Minha Senha">
+            <span>🔑</span> <span class="sidebar-pwd-text">Alterar Minha Senha</span>
           </button>
         </div>
       ` : ""}
@@ -269,6 +284,13 @@
         ` : ""}
       </div>
     `;
+
+    document.getElementById("sidebar-collapse-toggle")?.addEventListener("click", () => {
+      state.sidebarCollapsed = !state.sidebarCollapsed;
+      localStorage.setItem("arcanjo-sidebar-collapsed", state.sidebarCollapsed ? "1" : "0");
+      renderSidebar();
+      bindDynamicEvents();
+    });
 
     document.getElementById("sidebar-change-pwd-btn")?.addEventListener("click", () => {
       openChangePasswordModal(state.currentUser ? state.currentUser.id : null);
