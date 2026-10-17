@@ -1,8 +1,9 @@
 -- ============================================================================
 -- ARCANJO INTELLIGENCE — Schema PostgreSQL para Supabase
--- Você pode colar e executar este script no SQL Editor do Supabase,
--- ou simplesmente configurar DATABASE_URL na Vercel (o backend cria e popula
--- automaticamente todas as tabelas no primeiro acesso).
+-- Cole este script no menu "SQL Editor" do Supabase e clique em "Run".
+-- Assim que as tabelas forem criadas, o backend na Vercel (usando SUPABASE_URL
+-- e SUPABASE_SECRET_KEY / SUPABASE_PUBLISHABLE_KEY) irá popular os dados
+-- iniciais automaticamente no primeiro acesso!
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS areas (
@@ -149,3 +150,17 @@ CREATE TABLE IF NOT EXISTS trainings (
     participants TEXT NOT NULL,
     status TEXT NOT NULL
 );
+
+-- Liberar acesso para a API REST do Supabase (PostgREST)
+ALTER TABLE areas DISABLE ROW LEVEL SECURITY;
+ALTER TABLE checkpoints DISABLE ROW LEVEL SECURITY;
+ALTER TABLE patrol_sessions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE checkpoint_logs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE checklists DISABLE ROW LEVEL SECURITY;
+ALTER TABLE assets DISABLE ROW LEVEL SECURITY;
+ALTER TABLE occurrences DISABLE ROW LEVEL SECURITY;
+ALTER TABLE team_members DISABLE ROW LEVEL SECURITY;
+ALTER TABLE monthly_schedules DISABLE ROW LEVEL SECURITY;
+ALTER TABLE trainings DISABLE ROW LEVEL SECURITY;
+
+GRANT ALL ON TABLE areas, checkpoints, patrol_sessions, checkpoint_logs, checklists, assets, occurrences, team_members, monthly_schedules, trainings TO anon, authenticated, service_role;

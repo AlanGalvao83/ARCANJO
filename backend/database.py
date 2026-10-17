@@ -1,12 +1,16 @@
 import hashlib
+import json
 import os
 import re
 import secrets
 import sqlite3
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-# Detect Supabase / PostgreSQL connection URL from environment variables
+# 1. Direct PostgreSQL connection string (if provided)
 DATABASE_URL = (
     os.environ.get("DATABASE_URL")
     or os.environ.get("SUPABASE_DB_URL")
@@ -14,15 +18,33 @@ DATABASE_URL = (
     or ""
 ).strip()
 
-IS_POSTGRES = DATABASE_URL.startswith(("postgres://", "postgresql://"))
+# 2. Supabase HTTP REST API variables (from Supabase "Connect to your project" screen)
+SUPABASE_URL = (
+    os.environ.get("SUPABASE_URL")
+    or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+    or ""
+).strip().rstrip("/")
 
-# On Vercel Serverless (without DATABASE_URL), project root is read-only; use /tmp/arcanjo.db
-if os.environ.get("VERCEL") and not IS_POSTGRES:
+SUPABASE_KEY = (
+    os.environ.get("SUPABASE_SECRET_KEY")
+    or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    or os.environ.get("SUPABASE_PUBLISHABLE_KEY")
+    or os.environ.get("SUPABASE_ANON_KEY")
+    or os.environ.get("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+    or ""
+).strip()
+
+IS_POSTGRES = DATABASE_URL.startswith(("postgres://", "postgresql://"))
+IS_SUPABASE_REST = bool(SUPABASE_URL and SUPABASE_KEY and not IS_POSTGRES)
+
+# On Vercel Serverless, project root is read-only; use /tmp/arcanjo.db when falling back to SQLite
+if os.environ.get("VERCEL") or not os.access(Path(__file__).resolve().parent.parent, os.W_OK):
     DB_PATH = Path("/tmp/arcanjo.db")
 else:
     DB_PATH = Path(__file__).resolve().parent.parent / "arcanjo.db"
 
 _DB_INITIALIZED = False
+_SUPABASE_REST_AVAILABLE = None
 
 
 def hash_password(password: str, salt: str | None = None) -> str:
@@ -50,6 +72,274 @@ def slugify_username(name: str) -> str:
     return f"{parts[0]}.{parts[-1]}"
 
 
+# ============================================================================
+# SUPABASE REST API ADAPTER (Uses SUPABASE_URL + SUPABASE_SECRET_KEY / PUBLISHABLE_KEY)
+# ============================================================================
+def _supabase_headers(prefer: str = "return=representation") -> dict:
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Prefer": prefer,
+    }
+    # Legacy JWT keys (eyJ...) also require Authorization: Bearer
+    if SUPABASE_KEY.startswith("eyJ"):
+        headers["Authorization"] = f"Bearer {SUPABASE_KEY}"
+    return headers
+
+
+def _supabase_request(method: str, path: str, body=None, prefer: str = "return=representation"):
+    url = f"{SUPABASE_URL}/rest/v1/{path.lstrip('/')}"
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    req = urllib.request.Request(url, data=data, headers=_supabase_headers(prefer), method=method)
+    with urllib.request.urlopen(req, timeout=8) as resp:
+        raw = resp.read().decode("utf-8")
+        return json.loads(raw) if raw.strip() else []
+
+
+def _check_supabase_rest_tables() -> bool:
+    global _SUPABASE_REST_AVAILABLE
+    if _SUPABASE_REST_AVAILABLE is not None:
+        return _SUPABASE_REST_AVAILABLE
+    if not IS_SUPABASE_REST:
+        _SUPABASE_REST_AVAILABLE = False
+        return False
+    try:
+        _supabase_request("GET", "areas?select=id&limit=1")
+        _SUPABASE_REST_AVAILABLE = True
+        return True
+    except Exception:
+        # Tables not created yet in Supabase SQL Editor; fall back gracefully to SQLite
+        _SUPABASE_REST_AVAILABLE = False
+        return False
+
+
+class SupabaseRestCursor:
+    """Translates the application's SQL queries into Supabase PostgREST API calls."""
+
+    def __init__(self):
+        self._results = []
+
+    def executescript(self, script: str):
+        pass
+
+    def execute(self, sql: str, params=None):
+        params = list(params) if params else []
+        s = " ".join(sql.strip().split())
+        self._results = []
+
+        # 1. SELECT COUNT(*) as c FROM <table>
+        m = re.match(r"^SELECT COUNT\(\*\) as c FROM (\w+)", s, re.I)
+        if m:
+            table = m.group(1)
+            rows = _supabase_request("GET", f"{table}?select=id")
+            self._results = [{"c": len(rows)}]
+            return
+
+        # 2. SELECT COUNT(DISTINCT checkpoint_id) as visited FROM checkpoint_logs WHERE session_id = ?
+        if "COUNT(DISTINCT checkpoint_id)" in s:
+            sid = urllib.parse.quote(str(params[0]))
+            rows = _supabase_request("GET", f"checkpoint_logs?session_id=eq.{sid}&select=checkpoint_id")
+            uniq = {r.get("checkpoint_id") for r in rows if r.get("checkpoint_id")}
+            self._results = [{"visited": len(uniq)}]
+            return
+
+        # 3. SELECT queries
+        if s.upper().startswith("SELECT "):
+            m_from = re.search(r"\bFROM\s+(\w+)", s, re.I)
+            if not m_from:
+                return
+            table = m_from.group(1)
+            query_parts = ["select=*"]
+
+            if "WHERE UPPER(qr_token) = UPPER(?)" in s:
+                token = str(params[0]).strip().upper()
+                all_rows = _supabase_request("GET", f"{table}?select=*")
+                self._results = [
+                    r for r in all_rows
+                    if (r.get("qr_token") or "").upper() == token or (r.get("code") or "").upper() == token
+                ]
+                return
+
+            m_where = re.search(r"\bWHERE\s+(\w+)\s*=\s*(?:\?|'([^']*)')", s, re.I)
+            if m_where:
+                col = m_where.group(1)
+                val = m_where.group(2) if m_where.group(2) is not None else params[0]
+                query_parts.append(f"{col}=eq.{urllib.parse.quote(str(val))}")
+
+            m_order = re.search(r"\bORDER BY\s+(.+?)(?:\s+LIMIT\s+\d+|$)", s, re.I)
+            if m_order:
+                order_clause = m_order.group(1)
+                orders = []
+                for part in order_clause.split(","):
+                    tokens = part.strip().split()
+                    col = tokens[0]
+                    if col.lower() == "rowid":
+                        col = "id"
+                    direction = "desc" if len(tokens) > 1 and tokens[1].upper() == "DESC" else "asc"
+                    orders.append(f"{col}.{direction}")
+                if orders:
+                    query_parts.append(f"order={','.join(orders)}")
+
+            m_limit = re.search(r"\bLIMIT\s+(\d+)", s, re.I)
+            if m_limit:
+                query_parts.append(f"limit={m_limit.group(1)}")
+
+            self._results = _supabase_request("GET", f"{table}?{'&'.join(query_parts)}")
+            return
+
+        # 4. INSERT INTO <table> (cols...) VALUES (...)
+        if s.upper().startswith("INSERT INTO "):
+            self._insert_rows(s, [params])
+            return
+
+        # 5. UPDATE <table> SET ...
+        if s.upper().startswith("UPDATE "):
+            self._update_rows(s, params)
+            return
+
+        # 6. DELETE FROM <table> WHERE <col> = ?
+        if s.upper().startswith("DELETE FROM "):
+            m_del = re.match(r"^DELETE FROM\s+(\w+)\s+WHERE\s+(\w+)\s*=\s*\?", s, re.I)
+            if m_del:
+                table, col = m_del.group(1), m_del.group(2)
+                val = urllib.parse.quote(str(params[0]))
+                _supabase_request("DELETE", f"{table}?{col}=eq.{val}", prefer="return=minimal")
+            return
+
+    def executemany(self, sql: str, seq_of_params):
+        s = " ".join(sql.strip().split())
+        if s.upper().startswith("INSERT INTO "):
+            self._insert_rows(s, list(seq_of_params))
+
+    def _insert_rows(self, s: str, rows_params: list):
+        m = re.match(r"^INSERT INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)", s, re.I)
+        if not m:
+            return
+        table = m.group(1)
+        cols = [c.strip() for c in m.group(2).split(",")]
+        val_tokens = [v.strip() for v in m.group(3).split(",")]
+
+        payload_list = []
+        for p in rows_params:
+            p_idx = 0
+            item = {}
+            for col, tok in zip(cols, val_tokens):
+                if tok == "?":
+                    item[col] = p[p_idx]
+                    p_idx += 1
+                elif tok.upper() == "NULL":
+                    item[col] = None
+                elif tok.startswith("'") and tok.endswith("'"):
+                    item[col] = tok[1:-1]
+                else:
+                    try:
+                        item[col] = int(tok)
+                    except ValueError:
+                        item[col] = tok
+            payload_list.append(item)
+
+        if payload_list:
+            _supabase_request(
+                "POST",
+                f"{table}?on_conflict=id",
+                body=payload_list,
+                prefer="resolution=merge-duplicates,return=minimal",
+            )
+
+    def _update_rows(self, s: str, params: list):
+        m = re.match(r"^UPDATE\s+(\w+)\s+SET\s+(.+?)(?:\s+WHERE\s+(\w+)\s*=\s*\?)?$", s, re.I)
+        if not m:
+            return
+        table = m.group(1)
+        set_clause = m.group(2)
+        where_col = m.group(3)
+
+        where_val = params[-1] if where_col else None
+        set_params = params[:-1] if where_col else params
+
+        # Special computed updates in scan_checkpoint (patrol_sessions / areas)
+        if "anomalies_count = anomalies_count +" in set_clause and where_col:
+            rows = _supabase_request("GET", f"{table}?{where_col}=eq.{urllib.parse.quote(str(where_val))}")
+            curr = rows[0] if rows else {"anomalies_count": 0}
+            patch_body = {
+                "visited_checkpoints": set_params[0],
+                "anomalies_count": int(curr.get("anomalies_count") or 0) + int(set_params[1]),
+                "status": set_params[2],
+                "finished_at": set_params[3],
+            }
+            _supabase_request("PATCH", f"{table}?{where_col}=eq.{urllib.parse.quote(str(where_val))}", body=patch_body, prefer="return=minimal")
+            return
+
+        if "coverage = MAX(60, coverage - 10)" in set_clause or "coverage = MIN(100, coverage + 6)" in set_clause:
+            rows = _supabase_request("GET", f"{table}?{where_col}=eq.{urllib.parse.quote(str(where_val))}")
+            curr_cov = int((rows[0] if rows else {}).get("coverage") or 80)
+            if "MAX(60" in set_clause:
+                patch_body = {
+                    "status": "Atenção",
+                    "detail": set_params[0],
+                    "tone": "amber",
+                    "coverage": max(60, curr_cov - 10),
+                    "updated_at": set_params[1],
+                }
+            else:
+                patch_body = {
+                    "status": "Controlado",
+                    "detail": set_params[0],
+                    "tone": "green",
+                    "coverage": min(100, curr_cov + 6),
+                    "updated_at": set_params[1],
+                }
+            _supabase_request("PATCH", f"{table}?{where_col}=eq.{urllib.parse.quote(str(where_val))}", body=patch_body, prefer="return=minimal")
+            return
+
+        assignments = [a.strip() for a in set_clause.split(",")]
+        p_idx = 0
+        patch_body = {}
+        for assign in assignments:
+            col, rhs = [x.strip() for x in assign.split("=", 1)]
+            if rhs == "?":
+                patch_body[col] = set_params[p_idx]
+                p_idx += 1
+            elif rhs.upper() == "NULL":
+                patch_body[col] = None
+            elif rhs.startswith("'") and rhs.endswith("'"):
+                patch_body[col] = rhs[1:-1]
+            else:
+                try:
+                    patch_body[col] = int(rhs)
+                except ValueError:
+                    patch_body[col] = rhs
+
+        if where_col:
+            filter_qs = f"{where_col}=eq.{urllib.parse.quote(str(where_val))}"
+        else:
+            # Update all rows (e.g., reset-shift on checklists)
+            filter_qs = "id=neq.__none__"
+
+        _supabase_request("PATCH", f"{table}?{filter_qs}", body=patch_body, prefer="return=minimal")
+
+    def fetchone(self):
+        return self._results[0] if self._results else None
+
+    def fetchall(self):
+        return self._results
+
+
+class SupabaseRestConnection:
+    def cursor(self):
+        return SupabaseRestCursor()
+
+    def commit(self):
+        pass
+
+    def close(self):
+        pass
+
+
+# ============================================================================
+# DIRECT POSTGRESQL ADAPTER (Uses DATABASE_URL / SUPABASE_DB_URL)
+# ============================================================================
 class PostgresCompatCursor:
     """Wraps a psycopg2 RealDictCursor so SQLite-style '?' queries work transparently on Supabase PostgreSQL."""
 
@@ -58,12 +348,9 @@ class PostgresCompatCursor:
 
     @staticmethod
     def _translate_sql(sql: str) -> str:
-        # Convert SQLite '?' placeholders to PostgreSQL '%s'
         out = sql.replace("?", "%s")
-        # Convert SQLite scalar MAX/MIN(a, b) to PostgreSQL GREATEST/LEAST(a, b)
         out = re.sub(r"\bMAX\s*\(([^,]+),([^)]+)\)", r"GREATEST(\1,\2)", out)
         out = re.sub(r"\bMIN\s*\(([^,]+),([^)]+)\)", r"LEAST(\1,\2)", out)
-        # Convert SQLite 'rowid' to PostgreSQL 'ctid'
         out = re.sub(r"\browid\b", "ctid", out)
         return out
 
@@ -90,8 +377,6 @@ class PostgresCompatCursor:
 
 
 class PostgresCompatConnection:
-    """Wraps a psycopg2 connection to match sqlite3.Connection interface."""
-
     def __init__(self, raw_conn, cursor_factory):
         self._conn = raw_conn
         self._cursor_factory = cursor_factory
@@ -116,6 +401,9 @@ def _open_raw_conn():
             dsn = "postgresql://" + dsn[len("postgres://"):]
         raw_conn = psycopg2.connect(dsn)
         return PostgresCompatConnection(raw_conn, psycopg2.extras.RealDictCursor)
+
+    if IS_SUPABASE_REST and _check_supabase_rest_tables():
+        return SupabaseRestConnection()
 
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     conn.row_factory = sqlite3.Row
@@ -294,8 +582,8 @@ def init_db():
 
     cur.executescript(SCHEMA_SQL)
 
-    # Safe schema migrations if upgrading existing SQLite or Postgres table
-    if not IS_POSTGRES:
+    # Safe schema migrations if upgrading local SQLite table
+    if not IS_POSTGRES and not isinstance(conn, SupabaseRestConnection):
         cur.execute("PRAGMA table_info(team_members)")
         existing_cols = {row["name"] for row in cur.fetchall()}
         if "active" not in existing_cols:
@@ -318,20 +606,18 @@ def init_db():
     default_hash = hash_password("123456")
     cur.execute("SELECT id, name, email, username, password_hash FROM team_members")
     for row in cur.fetchall():
-        uname = (row["username"] or "").strip()
-        if not uname:
-            uname = slugify_username(row["name"])
-        email_val = (row["email"] or "").strip()
+        uname = (row.get("username") if isinstance(row, dict) else row["username"]) or ""
+        uname = uname.strip() or slugify_username(row["name"])
+        email_val = ((row.get("email") if isinstance(row, dict) else row["email"]) or "").strip()
         if not email_val:
             email_val = f"{uname}@templo.org"
-        phash = (row["password_hash"] or "").strip()
+        phash = ((row.get("password_hash") if isinstance(row, dict) else row["password_hash"]) or "").strip()
         if not phash:
             phash = default_hash
-        if (
-            uname != (row["username"] or "")
-            or email_val != (row["email"] or "")
-            or phash != (row["password_hash"] or "")
-        ):
+        orig_u = (row.get("username") if isinstance(row, dict) else row["username"]) or ""
+        orig_e = (row.get("email") if isinstance(row, dict) else row["email"]) or ""
+        orig_p = (row.get("password_hash") if isinstance(row, dict) else row["password_hash"]) or ""
+        if uname != orig_u or email_val != orig_e or phash != orig_p:
             cur.execute(
                 "UPDATE team_members SET username = ?, email = ?, password_hash = ? WHERE id = ?",
                 (uname, email_val, phash, row["id"]),
