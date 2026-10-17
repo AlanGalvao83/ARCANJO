@@ -111,12 +111,14 @@
       const nameEl = document.getElementById("user-session-name");
       const roleEl = document.getElementById("user-session-role");
       const avatarEl = document.getElementById("user-session-avatar");
-      if (nameEl) nameEl.textContent = state.currentUser.name;
-      if (roleEl) roleEl.textContent = `${state.currentUser.role} · 🔑 Alterar senha`;
+      const nameParts = (state.currentUser.name || "Operador")
+        .split(" ")
+        .filter(w => w && !["pr.", "presb.", "pr", "presb", "dr.", "dra."].includes(w.toLowerCase()));
+      const firstName = nameParts[0] || state.currentUser.name;
+      if (nameEl) nameEl.textContent = firstName;
+      if (roleEl) roleEl.textContent = state.currentUser.role;
       if (avatarEl) {
-        const initials = (state.currentUser.name || "U")
-          .split(" ")
-          .filter(Boolean)
+        const initials = nameParts
           .slice(0, 2)
           .map(w => w[0].toUpperCase())
           .join("");

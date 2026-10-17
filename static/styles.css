@@ -1236,20 +1236,23 @@ textarea.field { min-height: 80px; resize: vertical; }
   font-size: 12px;
   font-weight: 800;
 }
+.user-session-text,
 .user-session-info {
-  line-height: 1.15;
+  line-height: 1.2;
   text-align: left;
 }
+.user-session-text strong,
 .user-session-info strong {
   display: block;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--ink);
   text-transform: capitalize;
 }
+.user-session-text small,
 .user-session-info small {
   display: block;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--muted);
 }
