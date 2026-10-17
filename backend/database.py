@@ -772,6 +772,7 @@ def seed_initial_data(cur):
         ("tm-06", "Presb. Marcos Viana", "Gestor de Segurança", "Posto 06 · Coordenação & Tesouraria", "18:00 - 21:00", "Em Posto", "Rádio Canal 1/2 · (11) 99812-0106", "17:30", 1, "marcos@templo.org", "Gestor geral de segurança patrimonial e dupla custódia."),
         ("tm-07", "Rafael Costa", "Obreiros", "Nave Principal · Corredor Central", "18:00 - 21:00", "Pendente", "Rádio Canal 2 · (11) 99812-0107", None, 1, "rafael@templo.org", "Acolhimento e orientação de fluxo na nave."),
         ("tm-08", "Pr. Roberto Almeida", "Pastor", "Púlpito & Decisão de Continuidade", "18:30 - 21:00", "Em Posto", "Canal Direto · (11) 99812-0108", "18:00", 1, "pastor@templo.org", "Liderança espiritual e comunicação institucional."),
+        ("tm-650021", "Cosme Alan Martins Galvão", "Gestor de Segurança", "Posto 06 · Coordenação & Tesouraria", "18:00 - 21:00", "Em Posto", "61984400540", "18:00", 1, "camgalvao83@gmail.com", "Gestor de Segurança Patrimonial."),
     ]
     cur.executemany(
         """

@@ -128,37 +128,7 @@
       if (patrolAgent) patrolAgent.value = state.currentUser.name;
     } else {
       loginScreen.classList.remove("hidden");
-      renderQuickLoginPills();
     }
-  }
-
-  function renderQuickLoginPills() {
-    const grid = document.getElementById("login-quick-grid");
-    if (!grid || !state.team_members.length) return;
-    const activeList = state.team_members.filter(m => m.active);
-    // Pick up to 6 distinct profiles (including custom profiles added by the user)
-    const prioritized = [
-      ...activeList.filter(m => !m.id.startsWith("tm-0")), // custom profiles added by user first!
-      ...activeList.filter(m => m.id.startsWith("tm-0"))
-    ].slice(0, 6);
-
-    grid.innerHTML = prioritized.map(m => {
-      const loginId = m.email || m.username || m.name;
-      return `
-        <button type="button" class="login-quick-pill" data-quick-login="${esc(loginId)}" data-quick-pwd="123456">
-          <strong>${esc(m.role)}</strong>
-          <small>${esc(m.name)} (${esc(m.username || loginId)})</small>
-        </button>
-      `;
-    }).join("");
-
-    grid.querySelectorAll("[data-quick-login]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.getElementById("login-identifier").value = btn.dataset.quickLogin;
-        document.getElementById("login-password").value = btn.dataset.quickPwd || "123456";
-        document.getElementById("login-error").style.display = "none";
-      });
-    });
   }
 
   async function fetchState(silent = false) {
@@ -2249,14 +2219,6 @@
     const inp = document.getElementById("tm-password");
     if (!inp) return;
     inp.type = inp.type === "password" ? "text" : "password";
-  });
-
-  document.querySelectorAll("[data-quick-login]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.getElementById("login-identifier").value = btn.dataset.quickLogin;
-      document.getElementById("login-password").value = btn.dataset.quickPwd || "123456";
-      document.getElementById("login-error").style.display = "none";
-    });
   });
 
   document.getElementById("login-form")?.addEventListener("submit", async e => {
