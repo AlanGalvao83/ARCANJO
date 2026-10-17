@@ -285,6 +285,23 @@
       </div>
     `;
 
+    const bottomNavEl = document.getElementById("mobile-bottom-nav");
+    if (bottomNavEl) {
+      const mobileTabs = [
+        ["painel", "▦", "Início"],
+        ["rondas", "⌖", "Rondas"],
+        ["checklists", "☑", "Checks"],
+        ["equipe", "♙", "Equipe"],
+        ["escala", "📅", "Escala"]
+      ];
+      bottomNavEl.innerHTML = mobileTabs.map(([key, icon, shortLabel]) => `
+        <button type="button" class="mobile-bottom-tab ${state.view === key ? "active" : ""}" data-nav="${key}">
+          <span class="mobile-tab-icon">${icon}</span>
+          <span class="mobile-tab-label">${shortLabel}</span>
+        </button>
+      `).join("");
+    }
+
     document.getElementById("sidebar-collapse-toggle")?.addEventListener("click", () => {
       state.sidebarCollapsed = !state.sidebarCollapsed;
       localStorage.setItem("arcanjo-sidebar-collapsed", state.sidebarCollapsed ? "1" : "0");
@@ -1408,6 +1425,7 @@
       "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"
     ];
     const weekdays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const shortWeekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
     const year = state.calendarYear || 2026;
     const month = state.calendarMonth ?? 9; // 9 = Outubro
@@ -1434,11 +1452,12 @@
         const dateIso = `${monthPrefix}-${dayStr}`;
         const dayItems = monthSchedules.filter(s => s.date_iso === dateIso);
         const isToday = dateIso === "2026-10-16";
+        const shortWd = shortWeekdays[i % 7];
 
         cellsHtml += `
-          <div class="schedule-day-cell ${isToday ? "today-cell" : ""}" data-day-cell="${dateIso}" title="Clique para alocar integrante no dia ${dayStr}/${String(month + 1).padStart(2, "0")}/${year}">
+          <div class="schedule-day-cell ${isToday ? "today-cell" : ""} ${dayItems.length ? "has-items-cell" : ""}" data-day-cell="${dateIso}" title="Clique para alocar integrante no dia ${dayStr}/${String(month + 1).padStart(2, "0")}/${year}">
             <div class="schedule-day-top">
-              <span class="schedule-day-number">${dayStr}</span>
+              <span class="schedule-day-number"><span class="schedule-day-weekday">${shortWd} · </span>${dayStr}</span>
               <button type="button" class="schedule-day-add-hint" data-day-add="${dateIso}">＋ Alocar</button>
             </div>
             ${dayItems.length ? `
