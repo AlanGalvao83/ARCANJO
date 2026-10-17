@@ -1457,9 +1457,7 @@
                   `;
                 }).join("")}
               </div>
-            ` : `
-              <div class="schedule-nihill">NIHILL</div>
-            `}
+            ` : ""}
           </div>
         `;
       }
@@ -1472,7 +1470,7 @@
         <div>
           <div class="overline">Quadro Mensal de Alocação de Equipes</div>
           <h1>Quadro de Escala — ${monthNames[month]} ${year}</h1>
-          <p>Clique diretamente em qualquer <strong>dia do quadro abaixo</strong> para alocar integrantes cadastrados em <strong>Equipe</strong>. Dias sem alocação exibem automaticamente <code>NIHILL</code>.</p>
+          <p>Clique diretamente em qualquer <strong>dia do quadro abaixo</strong> para alocar integrantes cadastrados em <strong>Equipe</strong>.</p>
         </div>
         <div class="header-actions">
           <button class="outline-btn" id="print-schedule-board-btn">🖨️ Imprimir Quadro</button>
@@ -1495,7 +1493,7 @@
         <div class="summary blue">
           <div class="summary-label">Dias com Cobertura</div>
           <div class="summary-value">${distinctDates.length} / ${daysInMonth}</div>
-          <p class="summary-detail">${daysInMonth - distinctDates.length} dia(s) com status NIHILL</p>
+          <p class="summary-detail">${daysInMonth - distinctDates.length} dia(s) sem alocação</p>
         </div>
         <div class="summary amber">
           <div class="summary-label">Efetivo Ativo Disponível</div>
